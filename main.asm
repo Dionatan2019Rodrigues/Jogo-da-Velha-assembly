@@ -49,31 +49,54 @@
 		fam:
 		
 		while:
+			
 			jal input_jogada
 			fij:
 			
-			#jal maquina_input
-			#fmi:
+			jal detecta_fim
+			
+			li $t0,1
+			sw $t0,jogando
+			jal maquina_input
+			fmi:
+			
+			sw $zero,jogando
+			jal detecta_fim
 		
 			jal print_tabuleiro
-			fpt:
-			
-			jal detecta_fim
-			fdf:
-		
+			fpt:		
 		
 		beq $s7,$zero,while
+		
+		blt $s7,$zero,nadieGanha #condicao de empate
 		
 		bgt $s7,$s2,maqVence
 			li $v0,4 #imprime user venceu
 			la $a0, jogadorVence
 			syscall
+			j fim
 		maqVence:
-		
+			li $v0,4 #imprime cpu venceu
+			la $a0, cpuVence
+			syscall
+			j fim
+		nadieGanha:
+			li $v0,4 #imprime empate
+			la $a0, empate
+			syscall
+			
+		fim:
 	
 	
 	li $v0, 10
 	syscall 
+	
+	maquina_input:
+		
+		
+		
+		
+	j fmi
 	
 	atribui_mat:
 		move $t0,$zero
@@ -90,6 +113,7 @@
 		li $t1,36
 		lw $t7,jogando
 		
+		#VITORIA EM LINHAS
 		for:
 			beq $t0,$t1, finish
 			#VITORIA EM LINHAS
@@ -103,16 +127,18 @@
 			  bne $t2,$t6, nada
 			 	bne $t7,$zero,maqJoga
 			 		move $s7,$s2 #USER JOGANDO
-			 		j nada
+			 		j emBaixo
 			 	maqJoga:	
 			 		li $s3,2
 			 		move $s7,$s3 #maquina jogando
+			 		j emBaixo
 			 nada: 
 			
 			addi $t0,$t0,12
 		j for
 		finish:
 		
+		#VITORIA EM COLUNAS
 		move $t0,$zero
 		li $t1,12
 		fore:
@@ -128,10 +154,11 @@
 			  bne $t2,$t6, never
 			 	bne $t7,$zero,maquiJoga
 			 		move $s7,$s2 #USER JOGANDO
-			 		j never
+			 		j emBaixo
 			 	maquiJoga:	
 			 		li $s3,2
 			 		move $s7,$s3 #maquina jogando
+			 		j emBaixo
 			 never: 
 			
 			addi $t0,$t0,4
@@ -150,10 +177,11 @@
 		  bne $t2,$t6, note
 		   bne $t7,$zero,maquiTesta
 			move $s7,$s2 #USER JOGANDO
-			 j note
+			j emBaixo
 		   maquiTesta:	
 			 li $s3,2
 			 move $s7,$s3 #maquina jogando
+			 j emBaixo
 		note: 
 		
 		#DIAGONAL SECUNDARIA 
@@ -169,29 +197,42 @@
 		  bne $t2,$t6, n
 		   bne $t7,$zero,maquiUlt
 			move $s7,$s2 #USER JOGANDO
-			j n
+			j emBaixo
 		   maquiUlt:	
 			 li $s3,2
 			 move $s7,$s3 #maquina jogando
-		n: 
+			 j emBaixo
+		n:
+		
+		#EMPATE
+		move $t0,$zero
+		li $t1,36
+		move $t3,$zero
+		li $t4,9
+		li $t5,-1
+		repete:
+		beq $t0,$t1, acabou
+			
+			lw $t2,mat($t0)
+			beq $t2,$zero, naoConta
+				addi $t3,$t3,1
+			naoConta:
+			 
+			
+			addi $t0,$t0,4
+		j repete
+		acabou:
+		bne $t3,$t4,naoempatou
+			move $s7,$t5
+			j emBaixo
+		naoempatou:
+		
+		
+		emBaixo:
 		
 		
 		
-	j fdf
-	
-	#maquina_input:
-	#	li $t1,2
-	#	addi $t1,$t1,3
-	#	lw $t0,mat($t1)
-		
-		
-	#	bgt $t0,$zero,saiMeio
-	#		sw $t1,mat($t1)		#atribui na iesima posicao 
-	#	saiMeio:
-		
-		
-	
-	#j fmi
+	jr $ra
 		
 	input_jogada:
 		li $s0,4
@@ -288,85 +329,4 @@
 		saiDoLoope:
 	j fpt
 	
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
-		
+	
