@@ -1,3 +1,6 @@
+
+	
+	
 #*******************************************************************************
 #
 # Autor(es): Dionatan Rodrigues e Mateus Quadros
@@ -26,8 +29,8 @@
 	jogadorVence: .asciiz  "|USUARIO VENCEU|"
 	cpuVence: .asciiz  "|COMPUTADOR VENCEU|"
 	empate: .asciiz  "|EMPATE| "
-	
-	
+	meiolivre: .asciiz  "A POSIÇÃO DO MEIO ESTÁ LIVRE  "
+	meioocupado: .asciiz  "A POSIÇÃO DO MEIO ESTÁ OCUPADA  "	
 	mat:
  	  .align 2
  	  .space 36 #aloca 9 espacos no array
@@ -47,21 +50,26 @@
 		sw $zero,jogando
 		jal atribui_mat
 		fam:
+		li $t0,1
 		
 		while:
 			
 			jal input_jogada
 			fij:
 			
+			sw $zero,jogando
 			jal detecta_fim
+			beq $s7,$t0,love
 			
 			li $t0,1
 			sw $t0,jogando
 			jal maquina_input
 			fmi:
 			
-			sw $zero,jogando
+			
 			jal detecta_fim
+			
+			love:
 		
 			jal print_tabuleiro
 			fpt:		
@@ -92,10 +100,33 @@
 	syscall 
 	
 	maquina_input:
-		
-		
-		
-		
+		li $t0, 2 #Valor da jogada da CPU
+		li $t1, 1 #valor da jogada do usuário
+		li $t2, 16 #Posição no Tabuleiro
+		move $t3, $zero #indice de repetição
+		lw $a0, mat($t2) #Acessa essa posição na matriz
+		beq $a0, $zero, meio # Verifica se a posição do meio está livre
+		beq $a0, $t1, usermeio # Verifica se o usuário jogou no meio
+		li $t2, 0
+		loopmaquina:
+			beq $t3, 9, saidamaquina
+			addi $t3, $t3, 1
+			mul $t2, $t3, 4
+	        	lw $a0, mat($t2)
+	        	beq $a0, $zero, jogada
+	        	j loopmaquina
+	        	jogada:
+	        	sw $t0, mat($t2)
+	        	j saidamaquina
+		saidamaquina:
+	j fmi
+		meio:
+			sw $t0, mat($t2) #Muda o valor no tabuleiro
+	j fmi
+		usermeio:
+			li $t2, 20
+			lw $a0, mat($t2) 
+			sw $t0, mat($t2)
 	j fmi
 	
 	atribui_mat:
@@ -112,6 +143,7 @@
 		move $t0,$zero
 		li $t1,36
 		lw $t7,jogando
+		li $s2,1
 		
 		#VITORIA EM LINHAS
 		for:
@@ -127,7 +159,7 @@
 			  bne $t2,$t6, nada
 			 	bne $t7,$zero,maqJoga
 			 		move $s7,$s2 #USER JOGANDO
-			 		j emBaixo
+			 		j love
 			 	maqJoga:	
 			 		li $s3,2
 			 		move $s7,$s3 #maquina jogando
@@ -154,7 +186,7 @@
 			  bne $t2,$t6, never
 			 	bne $t7,$zero,maquiJoga
 			 		move $s7,$s2 #USER JOGANDO
-			 		j emBaixo
+			 		j love
 			 	maquiJoga:	
 			 		li $s3,2
 			 		move $s7,$s3 #maquina jogando
@@ -177,7 +209,7 @@
 		  bne $t2,$t6, note
 		   bne $t7,$zero,maquiTesta
 			move $s7,$s2 #USER JOGANDO
-			j emBaixo
+			j love
 		   maquiTesta:	
 			 li $s3,2
 			 move $s7,$s3 #maquina jogando
@@ -197,7 +229,7 @@
 		  bne $t2,$t6, n
 		   bne $t7,$zero,maquiUlt
 			move $s7,$s2 #USER JOGANDO
-			j emBaixo
+			j love
 		   maquiUlt:	
 			 li $s3,2
 			 move $s7,$s3 #maquina jogando
@@ -259,8 +291,7 @@
 		  
 		move  $a0,$t0 #LINHA
 		move  $a1,$t1 #COLUNA
-		jal iesima_posicao
-		fip:	
+		jal iesima_posicao	
 		
 		move $t9,$a2 # $t9 recebe iesiema posicao
 		lw $t7,mat($t9)
@@ -289,7 +320,7 @@
 		mul $t2,$s0,$t7		#multiplica * 4 porque inteiro ocupa 4 bytes
 		
 		move $a2,$t2		#return ieseima posicao
-	 j fip
+	 jr $ra
 		
 	print_tabuleiro:
 		move $t0, $zero
@@ -328,5 +359,3 @@
 			j loope 
 		saiDoLoope:
 	j fpt
-	
-	
